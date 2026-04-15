@@ -1,0 +1,2192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow — Kanban Board</title>
+    <style>
+        /* ─── DESIGN TOKENS FROM PLAY UI COMPONENT LIBRARY ─── */
+        :root {
+            /* Colors from cards.component.scss */
+            --Neutral-N-100: #ededf3;
+            --Neutral-N-200: #DADCE7;
+            --Neutral-N-1000: #292c3d;
+            --Neutral-N-1050: #14161f;
+            
+            /* Button tokens from button.component.scss */
+            --button-primary-bg-action: #3f51b5;
+            --button-primary-hover-action: #2e3f9e;
+            --button-primary-bg-active: #2e308e;
+            --button-primary-bg-subtle: rgba(63,81,181,0.08);
+            --button-primary-bg-disable: #e0e0e0;
+            --button-primary-label-action: #ffffff;
+            --button-primary-label-disable: #9e9e9e;
+            --button-primary-label-warning: #3f51b5;
+            --button-primary-bg-warning: #f59e0b;
+            --button-primary-hover-warning: #d97706;
+            --button-primary-bg-danger: #C9372C;
+            --button-primary-label-danger: #ffffff;
+            --button-primary-hover-danger: #b02a20;
+            --button-secondary-bg-bg: #ffffff;
+            --button-secondary-border-action: #858aad;
+            --button-secondary-border-disable: #e0e0e0;
+            --button-secondary-label-action: #292c3d;
+            --button-secondary-label-disable: #9e9e9e;
+            --button-secondary-label-warning: #C9372C;
+            --button-warning-hover-bg: #fff8ec;
+            --button-danger-hover-bg: #fff0ef;
+            --button-links-success: #019978;
+            --button-links-information: #2e308e;
+            --focused-selected-ring: #3f51b5;
+            --focused-selected-bg: rgba(63,81,181,0.08);
+            
+            /* Surface tokens from sidebar.component.scss */
+            --surface: rgba(255,255,255,0.9);
+            
+            /* Text tokens */
+            --text-body: #292c3d;
+            --text-title: #14161f;
+            --text-caption: #858aad;
+            --text-disabled: #A3A7C2;
+            --text-white: #ffffff;
+            
+            /* Icon tokens */
+            --icons-neutral-icon: #858aad;
+            --icons-action: #3f51b5;
+            --icons-success: #019978;
+            --icons-warning: #f59e0b;
+            
+            /* Badge tokens from badges.component.scss */
+            --badge-text-success: #ffffff;
+            --badge-text-warning: #292c3d;
+            
+            /* Card tokens from cards.component.scss */
+            --awe-card-border-radius: 6px;
+            --awe-card-padding-small: 16px;
+            --awe-card-padding-medium: 24px;
+            --awe-card-shadow: 0 2px 4px rgba(0,0,0,0.16);
+            --awe-card-shadow-elevated: 0 8px 16px rgba(0,0,0,0.16);
+            
+            /* Toggle tokens from toggle.component.scss */
+            --round: 9999px;
+            --toggle-height: 28px;
+            
+            /* Spacing system */
+            --spacing-1x: 4px;
+            --spacing-2x: 8px;
+            --spacing-3x: 12px;
+            --spacing-4x: 16px;
+            --spacing-5x: 20px;
+            --spacing-6x: 24px;
+            --spacing-7x: 28px;
+            --spacing-8x: 32px;
+            --spacing-10x: 40px;
+            --spacing-11x: 44px;
+            --spacing-12x: 48px;
+            --spacing-14x: 56px;
+            
+            /* Font tokens from heading/labels SCSS */
+            --font-font-family-body: 'DM Sans', sans-serif;
+            --font-font-family-heading: 'DM Sans', sans-serif;
+            --font-font-family-label: 'DM Sans', sans-serif;
+            --font-font-weight-regular: 400;
+            --font-font-weight-medium: 500;
+            --font-font-weight-bold: 700;
+            --font-font-size-body: 14px;
+            --font-font-size-label: 12px;
+            --font-font-size-small: 11px;
+            --font-font-size-heading-1: 32px;
+            --font-font-size-heading-2: 24px;
+            --font-font-size-heading-3: 20px;
+            --font-font-size-heading-4: 18px;
+            --font-font-size-heading-5: 16px;
+            --font-font-size-heading-6: 14px;
+            
+            /* Border radius */
+            --border-radius: 8px;
+            --border-radius-medium: 12px;
+            --3x: 12px;
+            --4x: 16px;
+            --5x: 20px;
+            
+            /* Elevation tokens from navbar */
+            --Elevation-Light-Fill-Light-30: rgba(240,240,245,0.3);
+            --Elevation-Light-Fill-Light-60: rgba(240,240,245,0.6);
+            --gradient-light-active: linear-gradient(102deg,rgba(63,81,181,0.08) 0%,rgba(63,81,181,0.12) 100%);
+            
+            /* Progress/stepper */
+            --progress-stroke-color: #858aad;
+            --auth-container-bg: rgba(240,240,245,0.72);
+            --auth-height-lg: 32px;
+        }
+        
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        html, body {
+            height: 100%;
+            font-family: var(--font-font-family-body);
+            background: var(--Neutral-N-100);
+            color: var(--text-body);
+            font-size: var(--font-font-size-body);
+            line-height: 1.5;
+        }
+        
+        /* ─── LAYOUT ─── */
+        #app {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* ─── SIDEBAR (from sidebar.component.scss) ─── */
+        .sidebar-container {
+            width: 260px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: row;
+        }
+        
+        .sidebar {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: var(--spacing-7x) var(--spacing-5x) var(--spacing-7x) var(--spacing-3x);
+            border-radius: 0;
+            border-right: 0.5px solid var(--Neutral-N-200);
+            background: var(--button-secondary-bg-bg);
+            box-shadow: 0px 2px 4px 0px rgba(0,0,0,0.16);
+            backdrop-filter: blur(15px);
+            overflow-y: auto;
+        }
+        
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-3x);
+            padding: 0 var(--spacing-3x) var(--spacing-6x);
+            border-bottom: 1px solid var(--Neutral-N-200);
+            margin-bottom: var(--spacing-4x);
+        }
+        
+        .brand-icon {
+            width: 34px;
+            height: 34px;
+            background: var(--button-primary-bg-action);
+            border-radius: var(--awe-card-border-radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #fff;
+            font-weight: var(--font-font-weight-bold);
+            flex-shrink: 0;
+        }
+        
+        .brand-name {
+            font-size: 15px;
+            font-weight: var(--font-font-weight-bold);
+            color: var(--text-title);
+            letter-spacing: -.02em;
+        }
+        
+        .brand-name span {
+            color: var(--button-primary-bg-action);
+        }
+        
+        .sidebar-section-label {
+            padding: var(--spacing-4x) var(--spacing-3x) var(--spacing-2x);
+            font-size: 10px;
+            font-weight: var(--font-font-weight-bold);
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--text-caption);
+        }
+        
+        /* sidebar ul/li from sidebar.component.scss */
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-1x);
+            width: 100%;
+        }
+        
+        .sidebar li {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            padding: var(--spacing-3x);
+            gap: var(--spacing-3x);
+            cursor: pointer;
+            border-radius: var(--spacing-3x);
+            transition: background-color 0.2s ease;
+            font-size: 13.5px;
+            font-weight: var(--font-font-weight-medium);
+            color: var(--text-caption);
+        }
+        
+        .sidebar li:hover {
+            background-color: var(--button-primary-bg-subtle);
+        }
+        
+        .sidebar li.selected {
+            background-color: var(--button-primary-bg-subtle);
+        }
+        
+        .sidebar li.selected span {
+            color: var(--button-primary-label-warning);
+            font-weight: var(--font-font-weight-medium);
+        }
+        
+        .sidebar li.selected svg {
+            color: var(--button-primary-bg-action);
+        }
+        
+        .nav-badge-pill {
+            margin-left: auto;
+            background: var(--button-primary-bg-action);
+            color: var(--text-white);
+            font-size: 10px;
+            font-weight: var(--font-font-weight-bold);
+            padding: 2px 7px;
+            border-radius: var(--round);
+        }
+        
+        .sb-footer {
+            margin-top: auto;
+            padding: var(--spacing-4x) var(--spacing-3x);
+            border-top: 1px solid var(--Neutral-N-200);
+        }
+        
+        .sb-footer-text {
+            font-size: var(--font-font-size-small);
+            color: var(--text-caption);
+            line-height: 1.9;
+        }
+        
+        .sb-footer-text strong {
+            color: var(--text-caption);
+            display: block;
+            font-weight: var(--font-font-weight-medium);
+        }
+        
+        /* ─── MAIN ─── */
+        #main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 0;
+        }
+        
+        /* ─── HEADER (from header.component.scss) ─── */
+        .outer-box {
+            width: 100%;
+            height: var(--spacing-14x);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--text-white);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            flex-shrink: 0;
+            padding: 0 var(--spacing-6x);
+        }
+        
+        .header-inner {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--spacing-3x);
+        }
+        
+        /* search from search-fields.component */
+        .search-field {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-2x);
+            flex: 1;
+            max-width: 360px;
+            background: var(--Elevation-Light-Fill-Light-30);
+            border: 1px solid var(--Neutral-N-200);
+            border-radius: var(--awe-card-border-radius);
+            padding: var(--spacing-2x) var(--spacing-3x);
+            color: var(--text-caption);
+        }
+        
+        .search-field input {
+            border: none;
+            background: transparent;
+            outline: none;
+            font-family: inherit;
+            font-size: var(--font-font-size-label);
+            color: var(--text-body);
+            flex: 1;
+        }
+        
+        .search-field input::placeholder {
+            color: var(--text-caption);
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-3x);
+        }
+        
+        /* icon button circular from navbar */
+        .circular-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 0.5px solid var(--Neutral-N-200);
+            background: var(--Elevation-Light-Fill-Light-60);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            color: var(--icons-neutral-icon);
+            transition: background 0.2s;
+        }
+        
+        .circular-icon:hover {
+            background: var(--Neutral-N-200);
+        }
+        
+        .notif-dot {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 7px;
+            height: 7px;
+            background: var(--button-primary-bg-danger);
+            border-radius: 50%;
+            border: 1.5px solid white;
+        }
+        
+        /* avatar from avatars.component.scss */
+        .avatar-container {
+            position: relative;
+            width: var(--spacing-12x);
+            height: var(--spacing-12x);
+            display: grid;
+            place-items: center;
+            border-radius: var(--round);
+            background: var(--Elevation-Light-Fill-Light-60);
+            overflow: visible;
+            width: 32px;
+            height: 32px;
+        }
+        
+        .avatar-img {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--round);
+            background: var(--button-primary-bg-action);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: var(--font-font-weight-bold);
+            color: var(--text-white);
+        }
+        
+        .avatar-chip {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-2x);
+            padding: 4px 10px 4px 4px;
+            background: var(--Elevation-Light-Fill-Light-30);
+            border: 0.5px solid var(--Neutral-N-200);
+            border-radius: var(--round);
+            cursor: pointer;
+        }
+        
+        .avatar-chip:hover {
+            background: var(--Neutral-N-200);
+        }
+        
+        .avatar-chip-name {
+            font-size: 13px;
+            font-weight: var(--font-font-weight-medium);
+            color: var(--text-body);
+        }
+        
+        /* ─── CONTENT ─── */
+        #content {
+            flex: 1;
+            overflow-y: auto;
+            background: var(--Neutral-N-100);
+        }
+        
+        .page {
+            display: none;
+            padding: var(--spacing-8x);
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        /* ─── PAGE HEADER ─── */
+        .page-hdr {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--spacing-6x);
+        }
+        
+        /* heading from heading.component.scss */
+        .heading.h3 {
+            font-size: var(--font-font-size-heading-3);
+            font-family: var(--font-font-family-heading);
+            font-weight: var(--font-font-weight-bold);
+            color: var(--text-title);
+            letter-spacing: -.03em;
+            line-height: 1.2;
+        }
+        
+        .page-sub {
+            font-size: var(--font-font-size-label);
+            color: var(--text-caption);
+            margin-top: 4px;
+        }
+        
+        /* ─── BREADCRUMB (from breadcrumbs.component.scss) ─── */
+        .breadcrumb {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 var(--spacing-2x);
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .breadcrumb li {
+            margin-right: var(--spacing-2x);
+            font-size: var(--spacing-4x);
+            display: flex;
+            align-items: center;
+            color: var(--text-caption);
+        }
+        
+        .breadcrumb li a {
+            text-decoration: none;
+            color: var(--text-body);
+            transition: color 0.3s ease;
+            display: inline-flex;
+        }
+        
+        .breadcrumb li a:hover {
+            color: var(--icons-success);
+        }
+        
+        .breadcrumb li span {
+            color: var(--button-links-success);
+            font-weight: var(--font-font-weight-regular);
+        }
+        
+        /* ─── KANBAN BOARD SPECIFIC STYLES ─── */
+        .kanban-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--spacing-6x);
+            height: calc(100vh - 200px);
+            margin-bottom: var(--spacing-4x);
+        }
+        
+        .kanban-column {
+            background: var(--button-secondary-bg-bg);
+            border-radius: var(--border-radius-medium);
+            box-shadow: var(--awe-card-shadow);
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        
+        .column-header {
+            padding: var(--spacing-4x) var(--spacing-5x);
+            border-bottom: 1px solid var(--Neutral-N-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--surface);
+            border-radius: var(--border-radius-medium) var(--border-radius-medium) 0 0;
+        }
+        
+        .column-title {
+            font-size: var(--font-font-size-heading-6);
+            font-weight: var(--font-font-weight-bold);
+            color: var(--text-title);
+        }
+        
+        .column-count {
+            background: var(--button-primary-bg-subtle);
+            color: var(--button-primary-bg-action);
+            font-size: var(--font-font-size-small);
+            font-weight: var(--font-font-weight-bold);
+            padding: 2px 8px;
+            border-radius: var(--round);
+        }
+        
+        .column-body {
+            flex: 1;
+            padding: var(--spacing-4x);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-3x);
+        }
+        
+        .task-card {
+            background: var(--button-secondary-bg-bg);
+            border: 1px solid var(--Neutral-N-200);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-4x);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0px 1px 4px 0px rgba(0,0,0,0.05);
+        }
+        
+        .task-card:hover {
+            box-shadow: var(--awe-card-shadow-elevated);
+            border-color: var(--button-primary-bg-action);
+        }
+        
+        .task-title {
+            font-size: var(--font-font-size-body);
+            font-weight: var(--font-font-weight-bold);
+            color: var(--text-title);
+            margin-bottom: var(--spacing-2x);
+        }
+        
+        .task-description {
+            font-size: var(--font-font-size-label);
+            color: var(--text-caption);
+            margin-bottom: var(--spacing-3x);
+            line-height: 1.4;
+        }
+        
+        .task-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: var(--spacing-3x);
+        }
+        
+        .task-assignee {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-2x);
+        }
+        
+        .task-priority {
+            font-size: var(--font-font-size-small);
+            font-weight: var(--font-font-weight-medium);
+            padding: 2px 6px;
+            border-radius: var(--awe-card-border-radius);
+        }
+        
+        .priority-high {
+            background: var(--button-danger-hover-bg);
+            color: var(--button-secondary-label-warning);
+        }
+        
+        .priority-medium {
+            background: var(--button-warning-hover-bg);
+            color: var(--icons-warning);
+        }
+        
+        .priority-low {
+            background: var(--Neutral-N-200);
+            color: var(--text-caption);
+        }
+        
+        .add-task-btn {
+            width: 100%;
+            padding: var(--spacing-3x);
+            border: 2px dashed var(--Neutral-N-200);
+            background: transparent;
+            border-radius: var(--border-radius);
+            color: var(--text-caption);
+            font-size: var(--font-font-size-label);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .add-task-btn:hover {
+            border-color: var(--button-primary-bg-action);
+            color: var(--button-primary-bg-action);
+            background: var(--button-primary-bg-subtle);
+        }
+        
+        /* ─── CARDS (from cards.component.scss) ─── */
+        .awe-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            border-radius: var(--awe-card-border-radius);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .awe-card--light {
+            background: var(--button-secondary-bg-bg);
+            color: var(--Neutral-N-1000);
+            box-shadow: var(--awe-card-shadow);
+        }
+        
+        .awe-card--auto {
+            width: 100%;
+            height: 100%;
+            padding: var(--awe-card-padding-small);
+        }
+        
+        .awe-card--medium {
+            width: 100%;
+            min-height: 200px;
+            padding: var(--awe-card-padding-medium);
+        }
+        
+        .awe-card:hover {
+            box-shadow: var(--awe-card-shadow-elevated);
+        }
+        
+        .awe-card__header {
+            margin-bottom: var(--spacing-4x);
+        }
+        
+        .card-title-text {
+            font-size: var(--font-font-size-heading-6);
+            font-weight: var(--font-font-weight-bold);
+            color: var(--text-title);
+        }
+        
+        .card-sub-text {
+            font-size: var(--font-font-size-small);
+            color: var(--text-caption);
+            margin-top: 2px;
+        }
+        
+        /* ─── BUTTONS (from button.component.scss exact classes) ─── */
+        button.btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-2x);
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            font-family: var(--font-font-family-body);
+            white-space: nowrap;
+            font-weight: var(--font-font-weight-medium);
+            line-height: 1.5;
+            border-radius: var(--border-radius);
+            text-align: center;
+            min-width: 6.25rem;
+        }
+        
+        button.btn.medium {
+            padding: 0.625rem 1.25rem;
+            font-size: 14px;
+        }
+        
+        button.btn.small {
+            padding: 0.4rem 0.875rem;
+            font-size: 12px;
+        }
+        
+        button.btn.large {
+            padding: 0.875rem 1.75rem;
+            font-size: 16px;
+        }
+        
+        button.btn.primary {
+            background-color: var(--button-primary-bg-action);
+            color: var(--button-primary-label-action);
+        }
+        
+        button.btn.primary:hover {
+            background-color: var(--button-primary-hover-action);
+        }
+        
+        button.btn.secondary {
+            background-color: var(--button-secondary-bg-bg);
+            border: 1px solid var(--button-secondary-border-action);
+            color: var(--button-secondary-label-action);
+        }
+        
+        button.btn.secondary:hover {
+            border-color: var(--focused-selected-ring);
+        }
+        
+        button.btn.ghost {
+            background: transparent;
+            border: none;
+            color: var(--text-caption);
+        }
+        
+        button.btn.ghost:hover {
+            background: var(--button-primary-bg-subtle);
+            color: var(--button-primary-bg-action);
+        }
+        
+        /* ─── MODAL STYLES ─── */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--button-secondary-bg-bg);
+            border-radius: var(--border-radius-medium);
+            box-shadow: var(--awe-card-shadow-elevated);
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: var(--spacing-6x);
+            border-bottom: 1px solid var(--Neutral-N-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: var(--font-font-size-heading-4);
+            font-weight: var(--font-font-weight-bold);
+            color: var(--text-title);
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-caption);
+            padding: var(--spacing-2x);
+        }
+        
+        .modal-body {
+            padding: var(--spacing-6x);
+        }
+        
+        .modal-footer {
+            padding: var(--spacing-6x);
+            border-top: 1px solid var(--Neutral-N-200);
+            display: flex;
+            gap: var(--spacing-3x);
+            justify-content: flex-end;
+        }
+        
+        /* ─── FORM STYLES ─── */
+        .form-group {
+            margin-bottom: var(--spacing-4x);
+        }
+        
+        .form-label {
+            display: block;
+            font-size: var(--font-font-size-label);
+            font-weight: var(--font-font-weight-medium);
+            color: var(--text-body);
+            margin-bottom: var(--spacing-2x);
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: var(--spacing-3x) var(--spacing-4x);
+            border: 2px solid var(--button-secondary-border-action);
+            border-radius: var(--border-radius);
+            font-size: var(--font-font-size-body);
+            color: var(--text-body);
+            background: var(--button-secondary-bg-bg);
+            transition: border-color 0.2s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--button-primary-bg-action);
+            box-shadow: 0 0 0 3px var(--button-primary-bg-subtle);
+        }
+        
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .form-select {
+            width: 100%;
+            padding: var(--spacing-3x) var(--spacing-4x);
+            border: 2px solid var(--button-secondary-border-action);
+            border-radius: var(--border-radius);
+            font-size: var(--font-font-size-body);
+            color: var(--text-body);
+            background: var(--button-secondary-bg-bg);
+            cursor: pointer;
+        }
+        
+        /* ─── RESPONSIVE DESIGN ─── */
+        @media (max-width: 1023px) {
+            .kanban-board {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-4x);
+                height: auto;
+            }
+            
+            .kanban-column {
+                min-height: 300px;
+            }
+        }
+        
+        @media (max-width: 767px) {
+            .sidebar-container {
+                width: 100%;
+                position: fixed;
+                top: 0;
+                left: -100%;
+                z-index: 999;
+                transition: left 0.3s ease;
+            }
+            
+            .sidebar-container.open {
+                left: 0;
+            }
+            
+            #main {
+                width: 100%;
+            }
+            
+            .page {
+                padding: var(--spacing-4x);
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: var(--spacing-4x);
+            }
+        }
+        
+        /* ─── ACCESSIBILITY STYLES ─── */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+        
+        .focus-visible {
+            outline: 2px solid var(--focused-selected-ring);
+            outline-offset: 2px;
+        }
+        
+        /* ─── DRAG AND DROP STYLES ─── */
+        .task-card.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
+        }
+        
+        .kanban-column.drag-over {
+            background: var(--button-primary-bg-subtle);
+            border: 2px dashed var(--button-primary-bg-action);
+        }
+        
+        .drop-zone {
+            min-height: 100px;
+            border: 2px dashed var(--Neutral-N-200);
+            border-radius: var(--border-radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-caption);
+            font-size: var(--font-font-size-label);
+            margin: var(--spacing-2x) 0;
+        }
+        
+        .drop-zone.active {
+            border-color: var(--button-primary-bg-action);
+            background: var(--button-primary-bg-subtle);
+            color: var(--button-primary-bg-action);
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar-container">
+            <nav class="sidebar" role="navigation" aria-label="Main navigation">
+                <div class="sidebar-brand">
+                    <div class="brand-icon">T</div>
+                    <div class="brand-name">Task<span>Flow</span></div>
+                </div>
+                
+                <div class="sidebar-section-label">Workspace</div>
+                <ul>
+                    <li class="selected" onclick="show('kanban-board', this)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/>
+                        </svg>
+                        <span>Kanban Board</span>
+                    </li>
+                    <li onclick="show('task-creation', this)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                        </svg>
+                        <span>Create Task</span>
+                    </li>
+                    <li onclick="show('task-management', this)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                        <span>Task Management</span>
+                    </li>
+                </ul>
+                
+                <div class="sidebar-section-label">Mobile Views</div>
+                <ul>
+                    <li onclick="show('mobile-kanban', this)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17 1H7c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2z"/>
+                        </svg>
+                        <span>Mobile Board</span>
+                    </li>
+                    <li onclick="show('mobile-task-creation', this)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17 1H7c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zm-5 16c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/>
+                        </svg>
+                        <span>Mobile Task Creation</span>
+                    </li>
+                </ul>
+                
+                <div class="sidebar-section-label">Collaboration</div>
+                <ul>
+                    <li onclick="show('team-collaboration', this)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zM4 18v-4h3v4h2v-7.5c0-.83.67-1.5 1.5-1.5S12 9.67 12 10.5V11h2.5c.83 0 1.5.67 1.5 1.5V18h2v-5.5c0-1.38-1.12-2.5-2.5-2.5H13V9.5c0-1.38-1.12-2.5-2.5-2.5S8 8.12 8 9.5V18H4z"/>
+                        </svg>
+                        <span>Team Dashboard</span>
+                    </li>
+                    <li onclick="show('analytics', this)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+                        </svg>
+                        <span>Analytics</span>
+                    </li>
+                </ul>
+                
+                <div class="sidebar-section-label">Accessibility</div>
+                <ul>
+                    <li onclick="show('accessibility-features', this)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm9 7h-6v13h-2v-6h-2v6H9V9H3V7h18v2z"/>
+                        </svg>
+                        <span>Accessibility</span>
+                    </li>
+                    <li onclick="show('keyboard-navigation', this)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20 5H4c-1.1 0-1.99.9-1.99 2L2 17c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-9 3h2v2h-2V8zm0 3h2v2h-2v-2zM8 8h2v2H8V8zm0 3h2v2H8v-2zm-1 2H5v-2h2v2zm0-3H5V8h2v2zm9 7H8v-2h8v2zm0-4h-2v-2h2v2zm0-3h-2V8h2v2zm3 3h-2v-2h2v2zm0-3h-2V8h2v2z"/>
+                        </svg>
+                        <span>Keyboard Navigation</span>
+                    </li>
+                </ul>
+                
+                <div class="sb-footer">
+                    <div class="sb-footer-text">
+                        <strong>TaskFlow v1.0.0</strong>
+                        Accessible Design System
+                        © 2024 TaskFlow Inc.
+                    </div>
+                </div>
+            </nav>
+        </div>
+        
+        <!-- Main Content Area -->
+        <main id="main">
+            <!-- Top Navigation Bar -->
+            <header class="outer-box">
+                <div class="header-inner">
+                    <div class="search-field">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                        </svg>
+                        <input type="text" placeholder="Search tasks, projects, or team members..." aria-label="Search">
+                    </div>
+                    
+                    <div class="header-right">
+                        <button class="circular-icon" aria-label="Notifications">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                            </svg>
+                            <div class="notif-dot"></div>
+                        </button>
+                        
+                        <button class="circular-icon" aria-label="Settings">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.82,11.69,4.82,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+                            </svg>
+                        </button>
+                        
+                        <div class="avatar-chip">
+                            <div class="avatar-img">SM</div>
+                            <span class="avatar-chip-name">Sarah Miller</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Content Area -->
+            <div id="content">
+                <!-- Kanban Board Landing Page -->
+                <div id="kanban-board" class="page active">
+                    <div class="page-hdr">
+                        <div>
+                            <h1 class="heading h3">Project Dashboard</h1>
+                            <p class="page-sub">Manage your team's workflow with visual task boards</p>
+                        </div>
+                        <button class="btn primary medium" onclick="openModal('task-modal')">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                            </svg>
+                            Add Task
+                        </button>
+                    </div>
+                    
+                    <div class="kanban-board" role="main" aria-label="Kanban board with three columns">
+                        <!-- To Do Column -->
+                        <div class="kanban-column" role="region" aria-labelledby="todo-header">
+                            <div class="column-header">
+                                <h2 id="todo-header" class="column-title">To Do</h2>
+                                <span class="column-count" aria-label="3 tasks">3</span>
+                            </div>
+                            <div class="column-body" role="list">
+                                <div class="task-card" role="listitem" tabindex="0" onclick="openModal('task-detail-modal')">
+                                    <h3 class="task-title">Design System Updates</h3>
+                                    <p class="task-description">Update color tokens and typography scale for better accessibility compliance</p>
+                                    <div class="task-meta">
+                                        <div class="task-assignee">
+                                            <div class="avatar-img">JD</div>
+                                            <span>John Doe</span>
+                                        </div>
+                                        <span class="task-priority priority-high">High</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="task-card" role="listitem" tabindex="0">
+                                    <h3 class="task-title">User Research Analysis</h3>
+                                    <p class="task-description">Analyze user feedback from recent usability testing sessions</p>
+                                    <div class="task-meta">
+                                        <div class="task-assignee">
+                                            <div class="avatar-img">AS</div>
+                                            <span>Alice Smith</span>
+                                        </div>
+                                        <span class="task-priority priority-medium">Medium</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="task-card" role="listitem" tabindex="0">
+                                    <h3 class="task-title">Mobile Responsive Testing</h3>
+                                    <p class="task-description">Test Kanban board functionality across different mobile devices</p>
+                                    <div class="task-meta">
+                                        <div class="task-assignee">
+                                            <div class="avatar-img">MB</div>
+                                            <span>Mike Brown</span>
+                                        </div>
+                                        <span class="task-priority priority-low">Low</span>
+                                    </div>
+                                </div>
+                                
+                                <button class="add-task-btn" onclick="openModal('task-modal')" aria-label="Add new task to To Do column">
+                                    + Add a task
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- In Progress Column -->
+                        <div class="kanban-column" role="region" aria-labelledby="progress-header">
+                            <div class="column-header">
+                                <h2 id="progress-header" class="column-title">In Progress</h2>
+                                <span class="column-count" aria-label="2 tasks">2</span>
+                            </div>
+                            <div class="column-body" role="list">
+                                <div class="task-card" role="listitem" tabindex="0">
+                                    <h3 class="task-title">Accessibility Implementation</h3>
+                                    <p class="task-description">Implement ARIA labels and keyboard navigation for screen readers</p>
+                                    <div class="task-meta">
+                                        <div class="task-assignee">
+                                            <div class="avatar-img">SM</div>
+                                            <span>Sarah Miller</span>
+                                        </div>
+                                        <span class="task-priority priority-high">High</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="task-card" role="listitem" tabindex="0">
+                                    <h3 class="task-title">Drag & Drop Functionality</h3>
+                                    <p class="task-description">Develop intuitive drag and drop with keyboard alternatives</p>
+                                    <div class="task-meta">
+                                        <div class="task-assignee">
+                                            <div class="avatar-img">RJ</div>
+                                            <span>Robert Johnson</span>
+                                        </div>
+                                        <span class="task-priority priority-medium">Medium</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="drop-zone">
+                                    Drop tasks here
+                                </div>
+                                
+                                <button class="add-task-btn" onclick="openModal('task-modal')" aria-label="Add new task to In Progress column">
+                                    + Add a task
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Done Column -->
+                        <div class="kanban-column" role="region" aria-labelledby="done-header">
+                            <div class="column-header">
+                                <h2 id="done-header" class="column-title">Done</h2>
+                                <span class="column-count" aria-label="4 tasks">4</span>
+                            </div>
+                            <div class="column-body" role="list">
+                                <div class="task-card" role="listitem" tabindex="0">
+                                    <h3 class="task-title">Initial Wireframes</h3>
+                                    <p class="task-description">Created low-fidelity wireframes for all main user flows</p>
+                                    <div class="task-meta">
+                                        <div class="task-assignee">
+                                            <div class="avatar-img">LW</div>
+                                            <span>Lisa Wang</span>
+                                        </div>
+                                        <span class="task-priority priority-medium">Medium</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="task-card" role="listitem" tabindex="0">
+                                    <h3 class="task-title">User Story Documentation</h3>
+                                    <p class="task-description">Documented comprehensive user stories and acceptance criteria</p>
+                                    <div class="task-meta">
+                                        <div class="task-assignee">
+                                            <div class="avatar-img">TC</div>
+                                            <span>Tom Chen</span>
+                                        </div>
+                                        <span class="task-priority priority-low">Low</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="task-card" role="listitem" tabindex="0">
+                                    <h3 class="task-title">Component Library Setup</h3>
+                                    <p class="task-description">Set up Play UI component library with design tokens</p>
+                                    <div class="task-meta">
+                                        <div class="task-assignee">
+                                            <div class="avatar-img">KL</div>
+                                            <span>Kevin Lee</span>
+                                        </div>
+                                        <span class="task-priority priority-high">High</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="task-card" role="listitem" tabindex="0">
+                                    <h3 class="task-title">Responsive Breakpoints</h3>
+                                    <p class="task-description">Defined responsive breakpoints for mobile, tablet, and desktop</p>
+                                    <div class="task-meta">
+                                        <div class="task-assignee">
+                                            <div class="avatar-img">NG</div>
+                                            <span>Nina Garcia</span>
+                                        </div>
+                                        <span class="task-priority priority-medium">Medium</span>
+                                    </div>
+                                </div>
+                                
+                                <button class="add-task-btn" onclick="openModal('task-modal')" aria-label="Add new task to Done column">
+                                    + Add a task
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Task Creation Interface -->
+                <div id="task-creation" class="page">
+                    <div class="page-hdr">
+                        <div>
+                            <h1 class="heading h3">Create New Task</h1>
+                            <p class="page-sub">Add a new task to your project board</p>
+                        </div>
+                    </div>
+                    
+                    <div class="awe-card awe-card--light awe-card--medium">
+                        <form>
+                            <div class="form-group">
+                                <label class="form-label" for="task-title">Task Title *</label>
+                                <input type="text" id="task-title" class="form-input" placeholder="Enter task title" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="task-description">Description</label>
+                                <textarea id="task-description" class="form-input form-textarea" placeholder="Describe the task in detail"></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="task-assignee">Assignee</label>
+                                <select id="task-assignee" class="form-select">
+                                    <option value="">Select team member</option>
+                                    <option value="john-doe">John Doe</option>
+                                    <option value="alice-smith">Alice Smith</option>
+                                    <option value="mike-brown">Mike Brown</option>
+                                    <option value="sarah-miller">Sarah Miller</option>
+                                    <option value="robert-johnson">Robert Johnson</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="task-priority">Priority</label>
+                                <select id="task-priority" class="form-select">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="task-due-date">Due Date</label>
+                                <input type="date" id="task-due-date" class="form-input">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="task-column">Initial Column</label>
+                                <select id="task-column" class="form-select">
+                                    <option value="todo" selected>To Do</option>
+                                    <option value="progress">In Progress</option>
+                                    <option value="done">Done</option>
+                                </select>
+                            </div>
+                            
+                            <div style="display: flex; gap: var(--spacing-3x); justify-content: flex-end; margin-top: var(--spacing-6x);">
+                                <button type="button" class="btn secondary medium" onclick="show('kanban-board', document.querySelector('.sidebar li'))">Cancel</button>
+                                <button type="submit" class="btn primary medium">Create Task</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Task Management Interface -->
+                <div id="task-management" class="page">
+                    <div class="page-hdr">
+                        <div>
+                            <h1 class="heading h3">Task Management</h1>
+                            <p class="page-sub">Manage task progress and workflow</p>
+                        </div>
+                    </div>
+                    
+                    <div class="awe-card awe-card--light awe-card--medium">
+                        <div class="awe-card__header">
+                            <h2 class="card-title-text">Quick Actions</h2>
+                            <p class="card-sub-text">Perform common task management operations</p>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing-4x);">
+                            <button class="btn secondary medium" style="min-width: auto;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+                                </svg>
+                                Bulk Move Tasks
+                            </button>
+                            
+                            <button class="btn secondary medium" style="min-width: auto;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                </svg>
+                                Set Priorities
+                            </button>
+                            
+                            <button class="btn secondary medium" style="min-width: auto;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                                </svg>
+                                Generate Report
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="awe-card awe-card--light awe-card--medium" style="margin-top: var(--spacing-6x);">
+                        <div class="awe-card__header">
+                            <h2 class="card-title-text">Task Filters</h2>
+                            <p class="card-sub-text">Filter tasks by various criteria</p>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing-4x);">
+                            <div class="form-group">
+                                <label class="form-label" for="filter-assignee">Filter by Assignee</label>
+                                <select id="filter-assignee" class="form-select">
+                                    <option value="">All team members</option>
+                                    <option value="john-doe">John Doe</option>
+                                    <option value="alice-smith">Alice Smith</option>
+                                    <option value="mike-brown">Mike Brown</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="filter-priority">Filter by Priority</label>
+                                <select id="filter-priority" class="form-select">
+                                    <option value="">All priorities</option>
+                                    <option value="high">High</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="low">Low</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="filter-status">Filter by Status</label>
+                                <select id="filter-status" class="form-select">
+                                    <option value="">All statuses</option>
+                                    <option value="todo">To Do</option>
+                                    <option value="progress">In Progress</option>
+                                    <option value="done">Done</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: var(--spacing-4x);">
+                            <button class="btn primary medium">Apply Filters</button>
+                            <button class="btn ghost medium">Clear All</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Mobile Kanban Board -->
+                <div id="mobile-kanban" class="page">
+                    <div class="page-hdr">
+                        <div>
+                            <h1 class="heading h3">Mobile Kanban Board</h1>
+                            <p class="page-sub">Optimized for mobile devices with vertical layout</p>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; flex-direction: column; gap: var(--spacing-4x);">
+                        <!-- Mobile Column Navigation -->
+                        <div style="display: flex; gap: var(--spacing-2x); overflow-x: auto; padding: var(--spacing-2x) 0;">
+                            <button class="btn primary small">To Do (3)</button>
+                            <button class="btn secondary small">In Progress (2)</button>
+                            <button class="btn secondary small">Done (4)</button>
+                        </div>
+                        
+                        <!-- Mobile Task Cards -->
+                        <div class="kanban-column" style="width: 100%;">
+                            <div class="column-header">
+                                <h2 class="column-title">To Do</h2>
+                                <span class="column-count">3</span>
+                            </div>
+                            <div class="column-body">
+                                <div class="task-card">
+                                    <h3 class="task-title">Design System Updates</h3>
+                                    <p class="task-description">Update color tokens and typography scale</p>
+                                    <div class="task-meta">
+                                        <div class="task-assignee">
+                                            <div class="avatar-img">JD</div>
+                                            <span>John Doe</span>
+                                        </div>
+                                        <span class="task-priority priority-high">High</span>
+                                    </div>
+                                    <div style="margin-top: var(--spacing-3x); display: flex; gap: var(--spacing-2x);">
+                                        <button class="btn ghost small">← Move</button>
+                                        <button class="btn ghost small">Move →</button>
+                                        <button class="btn ghost small">Edit</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="task-card">
+                                    <h3 class="task-title">User Research Analysis</h3>
+                                    <p class="task-description">Analyze user feedback from testing</p>
+                                    <div class="task-meta">
+                                        <div class="task-assignee">
+                                            <div class="avatar-img">AS</div>
+                                            <span>Alice Smith</span>
+                                        </div>
+                                        <span class="task-priority priority-medium">Medium</span>
+                                    </div>
+                                    <div style="margin-top: var(--spacing-3x); display: flex; gap: var(--spacing-2x);">
+                                        <button class="btn ghost small">← Move</button>
+                                        <button class="btn ghost small">Move →</button>
+                                        <button class="btn ghost small">Edit</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Mobile Task Creation -->
+                <div id="mobile-task-creation" class="page">
+                    <div class="page-hdr">
+                        <div>
+                            <h1 class="heading h3">Quick Task Creation</h1>
+                            <p class="page-sub">Streamlined task creation for mobile</p>
+                        </div>
+                    </div>
+                    
+                    <div class="awe-card awe-card--light awe-card--medium">
+                        <form>
+                            <div class="form-group">
+                                <label class="form-label" for="mobile-task-title">Task Title *</label>
+                                <input type="text" id="mobile-task-title" class="form-input" placeholder="What needs to be done?" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="mobile-task-assignee">Assign to</label>
+                                <select id="mobile-task-assignee" class="form-select">
+                                    <option value="">Select team member</option>
+                                    <option value="john-doe">John Doe</option>
+                                    <option value="alice-smith">Alice Smith</option>
+                                    <option value="mike-brown">Mike Brown</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Priority</label>
+                                <div style="display: flex; gap: var(--spacing-2x);">
+                                    <button type="button" class="btn secondary small">Low</button>
+                                    <button type="button" class="btn primary small">Medium</button>
+                                    <button type="button" class="btn secondary small">High</button>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; gap: var(--spacing-2x); margin-top: var(--spacing-6x);">
+                                <button type="button" class="btn secondary medium" style="flex: 1;">Cancel</button>
+                                <button type="submit" class="btn primary medium" style="flex: 1;">Create</button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div class="awe-card awe-card--light awe-card--medium" style="margin-top: var(--spacing-4x);">
+                        <div class="awe-card__header">
+                            <h2 class="card-title-text">Voice Input</h2>
+                            <p class="card-sub-text">Create tasks using voice commands</p>
+                        </div>
+                        
+                        <button class="btn primary large" style="width: 100%;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
+                            </svg>
+                            Tap to speak
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Team Collaboration Dashboard -->
+                <div id="team-collaboration" class="page">
+                    <div class="page-hdr">
+                        <div>
+                            <h1 class="heading h3">Team Collaboration</h1>
+                            <p class="page-sub">Monitor team activity and collaboration</p>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--spacing-6x);">
+                        <div class="awe-card awe-card--light awe-card--medium">
+                            <div class="awe-card__header">
+                                <h2 class="card-title-text">Team Activity</h2>
+                                <p class="card-sub-text">Recent team member actions</p>
+                            </div>
+                            
+                            <div style="display: flex; flex-direction: column; gap: var(--spacing-3x);">
+                                <div style="display: flex; align-items: center; gap: var(--spacing-3x); padding: var(--spacing-3x); border-radius: var(--border-radius); background: var(--Elevation-Light-Fill-Light-30);">
+                                    <div class="avatar-img">SM</div>
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: var(--font-font-weight-medium); font-size: var(--font-font-size-label);">Sarah Miller</div>
+                                        <div style="font-size: var(--font-font-size-small); color: var(--text-caption);">Moved "Accessibility Implementation" to In Progress</div>
+                                    </div>
+                                    <div style="font-size: var(--font-font-size-small); color: var(--text-caption);">2m ago</div>
+                                </div>
+                                
+                                <div style="display: flex; align-items: center; gap: var(--spacing-3x); padding: var(--spacing-3x); border-radius: var(--border-radius); background: var(--Elevation-Light-Fill-Light-30);">
+                                    <div class="avatar-img">JD</div>
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: var(--font-font-weight-medium); font-size: var(--font-font-size-label);">John Doe</div>
+                                        <div style="font-size: var(--font-font-size-small); color: var(--text-caption);">Added comment to "Design System Updates"</div>
+                                    </div>
+                                    <div style="font-size: var(--font-font-size-small); color: var(--text-caption);">5m ago</div>
+                                </div>
+                                
+                                <div style="display: flex; align-items: center; gap: var(--spacing-3x); padding: var(--spacing-3x); border-radius: var(--border-radius); background: var(--Elevation-Light-Fill-Light-30);">
+                                    <div class="avatar-img">AS</div>
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: var(--font-font-weight-medium); font-size: var(--font-font-size-label);">Alice Smith</div>
+                                        <div style="font-size: var(--font-font-size-small); color: var(--text-caption);">Created new task "User Research Analysis"</div>
+                                    </div>
+                                    <div style="font-size: var(--font-font-size-small); color: var(--text-caption);">12m ago</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="awe-card awe-card--light awe-card--medium">
+                            <div class="awe-card__header">
+                                <h2 class="card-title-text">Team Workload</h2>
+                                <p class="card-sub-text">Current task distribution</p>
+                            </div>
+                            
+                            <div style="display: flex; flex-direction: column; gap: var(--spacing-4x);">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="display: flex; align-items: center; gap: var(--spacing-2x);">
+                                        <div class="avatar-img">SM</div>
+                                        <span style="font-size: var(--font-font-size-label); font-weight: var(--font-font-weight-medium);">Sarah Miller</span>
+                                    </div>
+                                    <div style="display: flex; gap: var(--spacing-2x);">
+                                        <span style="background: var(--button-primary-bg-subtle); color: var(--button-primary-bg-action); padding: 2px 6px; border-radius: var(--awe-card-border-radius); font-size: var(--font-font-size-small);">3 tasks</span>
+                                    </div>
+                                </div>
+                                
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="display: flex; align-items: center; gap: var(--spacing-2x);">
+                                        <div class="avatar-img">JD</div>
+                                        <span style="font-size: var(--font-font-size-label); font-weight: var(--font-font-weight-medium);">John Doe</span>
+                                    </div>
+                                    <div style="display: flex; gap: var(--spacing-2x);">
+                                        <span style="background: var(--button-warning-hover-bg); color: var(--icons-warning); padding: 2px 6px; border-radius: var(--awe-card-border-radius); font-size: var(--font-font-size-small);">5 tasks</span>
+                                    </div>
+                                </div>
+                                
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="display: flex; align-items: center; gap: var(--spacing-2x);">
+                                        <div class="avatar-img">AS</div>
+                                        <span style="font-size: var(--font-font-size-label); font-weight: var(--font-font-weight-medium);">Alice Smith</span>
+                                    </div>
+                                    <div style="display: flex; gap: var(--spacing-2x);">
+                                        <span style="background: var(--Neutral-N-200); color: var(--text-caption); padding: 2px 6px; border-radius: var(--awe-card-border-radius); font-size: var(--font-font-size-small);">2 tasks</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Analytics Dashboard -->
+                <div id="analytics" class="page">
+                    <div class="page-hdr">
+                        <div>
+                            <h1 class="heading h3">Project Analytics</h1>
+                            <p class="page-sub">Insights and performance metrics</p>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--spacing-4x); margin-bottom: var(--spacing-6x);">
+                        <div class="awe-card awe-card--light awe-card--auto">
+                            <div style="display: flex; align-items: center; gap: var(--spacing-3x);">
+                                <div style="width: 40px; height: 40px; background: var(--button-primary-bg-subtle); color: var(--button-primary-bg-action); border-radius: var(--border-radius); display: flex; align-items: center; justify-content: center;">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div style="font-size: var(--font-font-size-heading-2); font-weight: var(--font-font-weight-bold); color: var(--text-title);">24</div>
+                                    <div style="font-size: var(--font-font-size-label); color: var(--text-caption);">Total Tasks</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="awe-card awe-card--light awe-card--auto">
+                            <div style="display: flex; align-items: center; gap: var(--spacing-3x);">
+                                <div style="width: 40px; height: 40px; background: rgba(1,153,120,0.1); color: var(--icons-success); border-radius: var(--border-radius); display: flex; align-items: center; justify-content: center;">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div style="font-size: var(--font-font-size-heading-2); font-weight: var(--font-font-weight-bold); color: var(--text-title);">18</div>
+                                    <div style="font-size: var(--font-font-size-label); color: var(--text-caption);">Completed</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="awe-card awe-card--light awe-card--auto">
+                            <div style="display: flex; align-items: center; gap: var(--spacing-3x);">
+                                <div style="width: 40px; height: 40px; background: var(--button-warning-hover-bg); color: var(--icons-warning); border-radius: var(--border-radius); display: flex; align-items: center; justify-content: center;">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div style="font-size: var(--font-font-size-heading-2); font-weight: var(--font-font-weight-bold); color: var(--text-title);">75%</div>
+                                    <div style="font-size: var(--font-font-size-label); color: var(--text-caption);">Completion Rate</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="awe-card awe-card--light awe-card--auto">
+                            <div style="display: flex; align-items: center; gap: var(--spacing-3x);">
+                                <div style="width: 40px; height: 40px; background: var(--button-danger-hover-bg); color: var(--button-secondary-label-warning); border-radius: var(--border-radius); display: flex; align-items: center; justify-content: center;">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div style="font-size: var(--font-font-size-heading-2); font-weight: var(--font-font-weight-bold); color: var(--text-title);">3.2</div>
+                                    <div style="font-size: var(--font-font-size-label); color: var(--text-caption);">Avg Days/Task</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="awe-card awe-card--light awe-card--medium">
+                        <div class="awe-card__header">
+                            <h2 class="card-title-text">Workflow Insights</h2>
+                            <p class="card-sub-text">Performance trends and bottlenecks</p>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing-4x);">
+                            <div>
+                                <h3 style="font-size: var(--font-font-size-heading-6); font-weight: var(--font-font-weight-bold); margin-bottom: var(--spacing-2x);">Column Distribution</h3>
+                                <div style="display: flex; flex-direction: column; gap: var(--spacing-2x);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-size: var(--font-font-size-label);">To Do</span>
+                                        <span style="font-weight: var(--font-font-weight-medium);">3 tasks</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-size: var(--font-font-size-label);">In Progress</span>
+                                        <span style="font-weight: var(--font-font-weight-medium);">2 tasks</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-size: var(--font-font-size-label);">Done</span>
+                                        <span style="font-weight: var(--font-font-weight-medium);">4 tasks</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h3 style="font-size: var(--font-font-size-heading-6); font-weight: var(--font-font-weight-bold); margin-bottom: var(--spacing-2x);">Priority Breakdown</h3>
+                                <div style="display: flex; flex-direction: column; gap: var(--spacing-2x);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-size: var(--font-font-size-label);">High Priority</span>
+                                        <span style="font-weight: var(--font-font-weight-medium); color: var(--button-secondary-label-warning);">4 tasks</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-size: var(--font-font-size-label);">Medium Priority</span>
+                                        <span style="font-weight: var(--font-font-weight-medium); color: var(--icons-warning);">3 tasks</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-size: var(--font-font-size-label);">Low Priority</span>
+                                        <span style="font-weight: var(--font-font-weight-medium); color: var(--text-caption);">2 tasks</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Accessibility Features -->
+                <div id="accessibility-features" class="page">
+                    <div class="page-hdr">
+                        <div>
+                            <h1 class="heading h3">Accessibility Features</h1>
+                            <p class="page-sub">Inclusive design for all users</p>
+                        </div>
+                    </div>
+                    
+                    <div class="awe-card awe-card--light awe-card--medium">
+                        <div class="awe-card__header">
+                            <h2 class="card-title-text">Screen Reader Support</h2>
+                            <p class="card-sub-text">ARIA labels and semantic structure</p>
+                        </div>
+                        
+                        <div style="display: flex; flex-direction: column; gap: var(--spacing-4x);">
+                            <div style="padding: var(--spacing-4x); background: var(--Elevation-Light-Fill-Light-30); border-radius: var(--border-radius);">
+                                <h3 style="font-size: var(--font-font-size-heading-6); font-weight: var(--font-font-weight-bold); margin-bottom: var(--spacing-2x);">ARIA Implementation</h3>
+                                <ul style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: var(--spacing-2x);">
+                                    <li style="display: flex; align-items: center; gap: var(--spacing-2x);">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--icons-success)">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                        </svg>
+                                        <span style="font-size: var(--font-font-size-label);">Proper heading hierarchy (H1-H6)</span>
+                                    </li>
+                                    <li style="display: flex; align-items: center; gap: var(--spacing-2x);">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--icons-success)">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                        </svg>
+                                        <span style="font-size: var(--font-font-size-label);">ARIA landmarks for navigation</span>
+                                    </li>
+                                    <li style="display: flex; align-items: center; gap: var(--spacing-2x);">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--icons-success)">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                        </svg>
+                                        <span style="font-size: var(--font-font-size-label);">Descriptive labels for all interactive elements</span>
+                                    </li>
+                                    <li style="display: flex; align-items: center; gap: var(--spacing-2x);">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--icons-success)">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                        </svg>
+                                        <span style="font-size: var(--font-font-size-label);">Live regions for dynamic content updates</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            
+                            <div style="padding: var(--spacing-4x); background: var(--Elevation-Light-Fill-Light-30); border-radius: var(--border-radius);">
+                                <h3 style="font-size: var(--font-font-size-heading-6); font-weight: var(--font-font-weight-bold); margin-bottom: var(--spacing-2x);">Visual Accessibility</h3>
+                                <ul style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: var(--spacing-2x);">
+                                    <li style="display: flex; align-items: center; gap: var(--spacing-2x);">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--icons-success)">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                        </svg>
+                                        <span style="font-size: var(--font-font-size-label);">WCAG 2.1 AA color contrast compliance</span>
+                                    </li>
+                                    <li style="display: flex; align-items: center; gap: var(--spacing-2x);">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--icons-success)">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                        </svg>
+                                        <span style="font-size: var(--font-font-size-label);">Visible focus indicators</span>
+                                    </li>
+                                    <li style="display: flex; align-items: center; gap: var(--spacing-2x);">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--icons-success)">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                        </svg>
+                                        <span style="font-size: var(--font-font-size-label);">Scalable text up to 200% zoom</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="awe-card awe-card--light awe-card--medium" style="margin-top: var(--spacing-6x);">
+                        <div class="awe-card__header">
+                            <h2 class="card-title-text">Customization Options</h2>
+                            <p class="card-sub-text">Adapt the interface to your needs</p>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--spacing-4x);">
+                            <div class="form-group">
+                                <label class="form-label" for="font-size">Font Size</label>
+                                <select id="font-size" class="form-select">
+                                    <option value="small">Small</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="large">Large</option>
+                                    <option value="extra-large">Extra Large</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="contrast-mode">Contrast Mode</label>
+                                <select id="contrast-mode" class="form-select">
+                                    <option value="normal" selected>Normal</option>
+                                    <option value="high">High Contrast</option>
+                                    <option value="dark">Dark Mode</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="motion-preference">Motion Preference</label>
+                                <select id="motion-preference" class="form-select">
+                                    <option value="normal" selected>Normal</option>
+                                    <option value="reduced">Reduced Motion</option>
+                                    <option value="none">No Animation</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: var(--spacing-4x);">
+                            <button class="btn primary medium">Apply Settings</button>
+                            <button class="btn ghost medium">Reset to Default</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Keyboard Navigation -->
+                <div id="keyboard-navigation" class="page">
+                    <div class="page-hdr">
+                        <div>
+                            <h1 class="heading h3">Keyboard Navigation</h1>
+                            <p class="page-sub">Complete keyboard accessibility support</p>
+                        </div>
+                    </div>
+                    
+                    <div class="awe-card awe-card--light awe-card--medium">
+                        <div class="awe-card__header">
+                            <h2 class="card-title-text">Keyboard Shortcuts</h2>
+                            <p class="card-sub-text">Efficient navigation and task management</p>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--spacing-6x);">
+                            <div>
+                                <h3 style="font-size: var(--font-font-size-heading-6); font-weight: var(--font-font-weight-bold); margin-bottom: var(--spacing-3x);">Navigation</h3>
+                                <div style="display: flex; flex-direction: column; gap: var(--spacing-2x);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-2x) 0; border-bottom: 1px solid var(--Neutral-N-200);">
+                                        <span style="font-size: var(--font-font-size-label);">Move between columns</span>
+                                        <code style="background: var(--Neutral-N-200); padding: 2px 6px; border-radius: var(--awe-card-border-radius); font-size: var(--font-font-size-small);">← →</code>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-2x) 0; border-bottom: 1px solid var(--Neutral-N-200);">
+                                        <span style="font-size: var(--font-font-size-label);">Move between tasks</span>
+                                        <code style="background: var(--Neutral-N-200); padding: 2px 6px; border-radius: var(--awe-card-border-radius); font-size: var(--font-font-size-small);">↑ ↓</code>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-2x) 0; border-bottom: 1px solid var(--Neutral-N-200);">
+                                        <span style="font-size: var(--font-font-size-label);">Navigate to sidebar</span>
+                                        <code style="background: var(--Neutral-N-200); padding: 2px 6px; border-radius: var(--awe-card-border-radius); font-size: var(--font-font-size-small);">Alt + S</code>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-2x) 0;">
+                                        <span style="font-size: var(--font-font-size-label);">Skip to main content</span>
+                                        <code style="background: var(--Neutral-N-200); padding: 2px 6px; border-radius: var(--awe-card-border-radius); font-size: var(--font-font-size-small);">Alt + M</code>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h3 style="font-size: var(--font-font-size-heading-6); font-weight: var(--font-font-weight-bold); margin-bottom: var(--spacing-3x);">Task Actions</h3>
+                                <div style="display: flex; flex-direction: column; gap: var(--spacing-2x);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-2x) 0; border-bottom: 1px solid var(--Neutral-N-200);">
+                                        <span style="font-size: var(--font-font-size-label);">Create new task</span>
+                                        <code style="background: var(--Neutral-N-200); padding: 2px 6px; border-radius: var(--awe-card-border-radius); font-size: var(--font-font-size-small);">Ctrl + N</code>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-2x) 0; border-bottom: 1px solid var(--Neutral-N-200);">
+                                        <span style="font-size: var(--font-font-size-label);">Edit selected task</span>
+                                        <code style="background: var(--Neutral-N-200); padding: 2px 6px; border-radius: var(--awe-card-border-radius); font-size: var(--font-font-size-small);">Enter</code>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-2x) 0; border-bottom: 1px solid var(--Neutral-N-200);">
+                                        <span style="font-size: var(--font-font-size-label);">Move task right</span>
+                                        <code style="background: var(--Neutral-N-200); padding: 2px 6px; border-radius: var(--awe-card-border-radius); font-size: var(--font-font-size-small);">Ctrl + →</code>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-2x) 0;">
+                                        <span style="font-size: var(--font-font-size-label);">Move task left</span>
+                                        <code style="background: var(--Neutral-N-200); padding: 2px 6px; border-radius: var(--awe-card-border-radius); font-size: var(--font-font-size-small);">Ctrl + ←</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="awe-card awe-card--light awe-card--medium" style="margin-top: var(--spacing-6x);">
+                        <div class="awe-card__header">
+                            <h2 class="card-title-text">Alternative Input Methods</h2>
+                            <p class="card-sub-text">Support for diverse interaction needs</p>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--spacing-4x);">
+                            <div style="padding: var(--spacing-4x); background: var(--Elevation-Light-Fill-Light-30); border-radius: var(--border-radius);">
+                                <h3 style="font-size: var(--font-font-size-heading-6); font-weight: var(--font-font-weight-bold); margin-bottom: var(--spacing-2x);">Switch Control</h3>
+                                <p style="font-size: var(--font-font-size-label); color: var(--text-caption); margin-bottom: var(--spacing-3x);">Single-switch navigation support</p>
+                                <button class="btn secondary small">Configure Switch</button>
+                            </div>
+                            
+                            <div style="padding: var(--spacing-4x); background: var(--Elevation-Light-Fill-Light-30); border-radius: var(--border-radius);">
+                                <h3 style="font-size: var(--font-font-size-heading-6); font-weight: var(--font-font-weight-bold); margin-bottom: var(--spacing-2x);">Eye Tracking</h3>
+                                <p style="font-size: var(--font-font-size-label); color: var(--text-caption); margin-bottom: var(--spacing-3x);">Hands-free cursor control</p>
+                                <button class="btn secondary small">Setup Eye Tracking</button>
+                            </div>
+                            
+                            <div style="padding: var(--spacing-4x); background: var(--Elevation-Light-Fill-Light-30); border-radius: var(--border-radius);">
+                                <h3 style="font-size: var(--font-font-size-heading-6); font-weight: var(--font-font-weight-bold); margin-bottom: var(--spacing-2x);">Voice Control</h3>
+                                <p style="font-size: var(--font-font-size-label); color: var(--text-caption); margin-bottom: var(--spacing-3x);">Voice commands for task management</p>
+                                <button class="btn secondary small">Enable Voice</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Task Creation Modal -->
+    <div id="task-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Create New Task</h2>
+                <button class="modal-close" onclick="closeModal('task-modal')" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <label class="form-label" for="modal-task-title">Task Title *</label>
+                        <input type="text" id="modal-task-title" class="form-input" placeholder="Enter task title" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="modal-task-description">Description</label>
+                        <textarea id="modal-task-description" class="form-input form-textarea" placeholder="Describe the task in detail"></textarea>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-4x);">
+                        <div class="form-group">
+                            <label class="form-label" for="modal-task-assignee">Assignee</label>
+                            <select id="modal-task-assignee" class="form-select">
+                                <option value="">Select team member</option>
+                                <option value="john-doe">John Doe</option>
+                                <option value="alice-smith">Alice Smith</option>
+                                <option value="mike-brown">Mike Brown</option>
+                                <option value="sarah-miller">Sarah Miller</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="modal-task-priority">Priority</label>
+                            <select id="modal-task-priority" class="form-select">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="modal-task-due-date">Due Date</label>
+                        <input type="date" id="modal-task-due-date" class="form-input">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn secondary medium" onclick="closeModal('task-modal')">Cancel</button>
+                <button type="submit" class="btn primary medium">Create Task</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Task Detail Modal -->
+    <div id="task-detail-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Design System Updates</h2>
+                <button class="modal-close" onclick="closeModal('task-detail-modal')" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: var(--spacing-4x);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-3x);">
+                        <span style="font-size: var(--font-font-size-label); color: var(--text-caption);">Status</span>
+                        <select class="form-select" style="width: auto; min-width: 120px;">
+                            <option value="todo" selected>To Do</option>
+                            <option value="progress">In Progress</option>
+                            <option value="done">Done</option>
+                        </select>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-3x);">
+                        <span style="font-size: var(--font-font-size-label); color: var(--text-caption);">Assignee</span>
+                        <div style="display: flex; align-items: center; gap: var(--spacing-2x);">
+                            <div class="avatar-img">JD</div>
+                            <span style="font-size: var(--font-font-size-label);">John Doe</span>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-3x);">
+                        <span style="font-size: var(--font-font-size-label); color: var(--text-caption);">Priority</span>
+                        <span class="task-priority priority-high">High</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <p style="font-size: var(--font-font-size-body); line-height: 1.6;">Update color tokens and typography scale for better accessibility compliance. This includes reviewing all existing color combinations for WCAG 2.1 AA compliance and updating the design system documentation.</p>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Comments</label>
+                    <div style="background: var(--Elevation-Light-Fill-Light-30); border-radius: var(--border-radius); padding: var(--spacing-4x);">
+                        <div style="display: flex; align-items: center; gap: var(--spacing-2x); margin-bottom: var(--spacing-2x);">
+                            <div class="avatar-img">SM</div>
+                            <span style="font-size: var(--font-font-size-label); font-weight: var(--font-font-weight-medium);">Sarah Miller</span>
+                            <span style="font-size: var(--font-font-size-small); color: var(--text-caption);">2 hours ago</span>
+                        </div>
+                        <p style="font-size: var(--font-font-size-label); line-height: 1.5;">I've started reviewing the current color palette. We'll need to adjust several secondary colors to meet contrast requirements.</p>
+                    </div>
+                    
+                    <div style="margin-top: var(--spacing-3x);">
+                        <textarea class="form-input form-textarea" placeholder="Add a comment..." style="min-height: 60px;"></textarea>
+                        <button class="btn primary small" style="margin-top: var(--spacing-2x);">Add Comment</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn secondary medium" onclick="closeModal('task-detail-modal')">Close</button>
+                <button type="button" class="btn primary medium">Save Changes</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Navigation function
+        function show(id, el) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            // Show selected page
+            document.getElementById(id).classList.add('active');
+            // Update sidebar selection
+            document.querySelectorAll('.sidebar li').forEach(n => n.classList.remove('selected'));
+            if (el) el.classList.add('selected');
+        }
+        
+        // Modal functions
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+            // Focus management for accessibility
+            const modal = document.getElementById(modalId);
+            const firstInput = modal.querySelector('input, textarea, select, button');
+            if (firstInput) firstInput.focus();
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+        
+        // Close modal when clicking outside
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('active');
+                }
+            });
+        });
+        
+        // Keyboard navigation support
+        document.addEventListener('keydown', function(e) {
+            // Close modal with Escape key
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+                    modal.classList.remove('active');
+                });
+            }
+            
+            // Keyboard shortcuts
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'n':
+                        e.preventDefault();
+                        openModal('task-modal');
+                        break;
+                }
+            }
+            
+            if (e.altKey) {
+                switch(e.key) {
+                    case 's':
+                        e.preventDefault();
+                        document.querySelector('.sidebar li').focus();
+                        break;
+                    case 'm':
+                        e.preventDefault();
+                        document.querySelector('#content .page.active').focus();
+                        break;
+                }
+            }
+        });
+        
+        // Drag and drop simulation (for demonstration)
+        let draggedElement = null;
+        
+        document.querySelectorAll('.task-card').forEach(card => {
+            card.draggable = true;
+            
+            card.addEventListener('dragstart', function(e) {
+                draggedElement = this;
+                this.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+            
+            card.addEventListener('dragend', function(e) {
+                this.classList.remove('dragging');
+                draggedElement = null;
+            });
+        });
+        
+        document.querySelectorAll('.column-body').forEach(column => {
+            column.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                this.parentElement.classList.add('drag-over');
+            });
+            
+            column.addEventListener('dragleave', function(e) {
+                this.parentElement.classList.remove('drag-over');
+            });
+            
+            column.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.parentElement.classList.remove('drag-over');
+                
+                if (draggedElement) {
+                    // Find the add button and insert before it
+                    const addButton = this.querySelector('.add-task-btn');
+                    if (addButton) {
+                        this.insertBefore(draggedElement, addButton);
+                    } else {
+                        this.appendChild(draggedElement);
+                    }
+                    
+                    // Update column counts (simplified)
+                    updateColumnCounts();
+                }
+            });
+        });
+        
+        function updateColumnCounts() {
+            document.querySelectorAll('.kanban-column').forEach(column => {
+                const tasks = column.querySelectorAll('.task-card').length;
+                const countElement = column.querySelector('.column-count');
+                if (countElement) {
+                    countElement.textContent = tasks;
+                    countElement.setAttribute('aria-label', `${tasks} tasks`);
+                }
+            });
+        }
+        
+        // Initialize accessibility features
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add focus management for task cards
+            document.querySelectorAll('.task-card').forEach(card => {
+                card.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        openModal('task-detail-modal');
+                    }
+                });
+            });
+            
+            // Add live region for announcements
+            const liveRegion = document.createElement('div');
+            liveRegion.setAttribute('aria-live', 'polite');
+            liveRegion.setAttribute('aria-atomic', 'true');
+            liveRegion.className = 'sr-only';
+            liveRegion.id = 'live-region';
+            document.body.appendChild(liveRegion);
+            
+            // Announce page changes
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                        const target = mutation.target;
+                        if (target.classList.contains('page') && target.classList.contains('active')) {
+                            const pageTitle = target.querySelector('.heading')?.textContent || 'Page loaded';
+                            liveRegion.textContent = `Navigated to ${pageTitle}`;
+                        }
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.page').forEach(page => {
+                observer.observe(page, { attributes: true, attributeFilter: ['class'] });
+            });
+        });
+    </script>
+</body>
+</html>
