@@ -1,0 +1,651 @@
+openapi: 3.0.3
+info:
+  title: tasheel_demo API
+  version: 1.0.0
+  description: API for BridgeNow Finance Application Journey & Communication system
+servers:
+  - url: https://example.com
+    description: Production server
+paths:
+  /api/v1/bridgenow/landing-page:
+    get:
+      operationId: VRVTEMP390GetLandingPageContentGET
+      summary: Get Landing Page Content
+      description: Retrieves the landing page content including branding assets and product highlights
+      tags:
+        - Landing Page
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LandingPageResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/bridgenow/applications:
+    post:
+      operationId: VRVTEMP390SubmitApplicationPOST
+      summary: Submit Application
+      description: Submits a new finance application for processing
+      tags:
+        - Applications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationRequest'
+      responses:
+        '201':
+          description: Application submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationResponse'
+        '400':
+          description: Validation error or eligibility failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/bridgenow/eligibility/check:
+    post:
+      operationId: VRVTEMP390CheckEligibilityPOST
+      summary: Check Eligibility
+      description: Checks customer eligibility for STP processing
+      tags:
+        - Eligibility
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EligibilityRequest'
+      responses:
+        '200':
+          description: Eligibility check completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EligibilityResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/bridgenow/applications/{applicationId}/status:
+    get:
+      operationId: VRVTEMP390GetApplicationStatusGET
+      summary: Get Application Status
+      description: Retrieves the current status of an application
+      tags:
+        - Applications
+      parameters:
+        - name: applicationId
+          in: path
+          required: true
+          description: Unique application identifier
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Application status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationStatusResponse'
+        '404':
+          description: Application not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/bridgenow/applications/{applicationId}:
+    put:
+      operationId: VRVTEMP390UpdateApplicationPUT
+      summary: Update Application
+      description: Updates an existing application
+      tags:
+        - Applications
+      parameters:
+        - name: applicationId
+          in: path
+          required: true
+          description: Unique application identifier
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationUpdateRequest'
+      responses:
+        '200':
+          description: Application updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Application not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/bridgenow/products/{productId}:
+    get:
+      operationId: VRVTEMP390GetProductDetailsGET
+      summary: Get Product Details
+      description: Retrieves detailed information about a specific product
+      tags:
+        - Products
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          description: Unique product identifier
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Product details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetailsResponse'
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/bridgenow/communications/templates:
+    get:
+      operationId: VRVTEMP390GetCommunicationTemplatesGET
+      summary: Get Communication Templates
+      description: Retrieves all available communication templates
+      tags:
+        - Communications
+      responses:
+        '200':
+          description: Communication templates retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CommunicationTemplate'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/bridgenow/applications/{applicationId}/manual-review:
+    post:
+      operationId: VRVTEMP390TriggerManualReviewPOST
+      summary: Trigger Manual Review
+      description: Triggers manual review workflow for an application
+      tags:
+        - Applications
+      parameters:
+        - name: applicationId
+          in: path
+          required: true
+          description: Unique application identifier
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManualReviewRequest'
+      responses:
+        '201':
+          description: Manual review triggered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManualReviewResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Application not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    LandingPageResponse:
+      type: object
+      properties:
+        pageTitle:
+          type: string
+          description: Landing page title
+        heroText:
+          type: string
+          description: Hero section text
+        ctaText:
+          type: string
+          description: Call-to-action text
+        brandingAssetUrl:
+          type: string
+          description: URL to branding assets
+        productHighlights:
+          type: string
+          description: Product highlights in JSON format
+        eligibilityCriteria:
+          type: string
+          description: Eligibility criteria in JSON format
+
+    ApplicationRequest:
+      type: object
+      required:
+        - customerId
+        - firstName
+        - lastName
+        - email
+        - phoneNumber
+        - loanAmount
+        - annualIncome
+        - employmentStatus
+      properties:
+        customerId:
+          type: string
+          format: uuid
+          description: Customer ID
+        firstName:
+          type: string
+          maxLength: 50
+          pattern: '^[a-zA-Z]+$'
+          description: First name (letters only)
+        lastName:
+          type: string
+          maxLength: 50
+          pattern: '^[a-zA-Z]+$'
+          description: Last name (letters only)
+        email:
+          type: string
+          format: email
+          maxLength: 100
+          description: Valid email address
+        phoneNumber:
+          type: string
+          maxLength: 20
+          description: Valid phone number
+        loanAmount:
+          type: number
+          format: decimal
+          minimum: 10000
+          maximum: 500000
+          description: Loan amount between $10,000 and $500,000
+        annualIncome:
+          type: number
+          format: decimal
+          minimum: 1
+          description: Annual income (positive value)
+        employmentStatus:
+          type: string
+          enum:
+            - Employed
+            - SelfEmployed
+            - Unemployed
+            - Retired
+          description: Employment status
+        creditScore:
+          type: integer
+          minimum: 300
+          maximum: 850
+          description: Credit score (optional)
+        propertyValue:
+          type: number
+          format: decimal
+          description: Property value (required for bridge loans)
+
+    ApplicationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Application ID
+        customerId:
+          type: string
+          format: uuid
+          description: Customer ID
+        status:
+          type: string
+          enum:
+            - Submitted
+            - Processing
+            - UnderReview
+            - Approved
+            - Rejected
+            - Disbursed
+          description: Application status
+        isStpEligible:
+          type: boolean
+          description: STP eligibility flag
+        eligibilityStatus:
+          type: string
+          description: Eligibility status description
+        currentStage:
+          type: string
+          description: Current workflow stage
+        submittedDate:
+          type: string
+          format: date-time
+          description: Application submission date
+
+    EligibilityRequest:
+      type: object
+      required:
+        - customerId
+      properties:
+        customerId:
+          type: string
+          format: uuid
+          description: Customer ID
+        loanAmount:
+          type: number
+          format: decimal
+          description: Requested loan amount
+        annualIncome:
+          type: number
+          format: decimal
+          description: Annual income
+
+    EligibilityResponse:
+      type: object
+      properties:
+        isEligible:
+          type: boolean
+          description: Overall eligibility status
+        isStpEligible:
+          type: boolean
+          description: STP eligibility status
+        status:
+          type: string
+          description: Eligibility status (STP_ELIGIBLE or MANUAL_REVIEW_REQUIRED)
+        ruleResults:
+          type: array
+          items:
+            type: object
+            properties:
+              ruleName:
+                type: string
+              passed:
+                type: boolean
+              message:
+                type: string
+        evaluatedDate:
+          type: string
+          format: date-time
+          description: Evaluation timestamp
+
+    ApplicationStatusResponse:
+      type: object
+      properties:
+        applicationId:
+          type: string
+          format: uuid
+          description: Application ID
+        status:
+          type: string
+          description: Current application status
+        lastUpdated:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        isStpProcessed:
+          type: boolean
+          description: STP processing flag
+        currentStage:
+          type: string
+          description: Current workflow stage
+
+    ApplicationUpdateRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+          maxLength: 50
+          pattern: '^[a-zA-Z]+$'
+        lastName:
+          type: string
+          maxLength: 50
+          pattern: '^[a-zA-Z]+$'
+        email:
+          type: string
+          format: email
+          maxLength: 100
+        phoneNumber:
+          type: string
+          maxLength: 20
+        loanAmount:
+          type: number
+          format: decimal
+          minimum: 10000
+          maximum: 500000
+        annualIncome:
+          type: number
+          format: decimal
+          minimum: 1
+        employmentStatus:
+          type: string
+          enum:
+            - Employed
+            - SelfEmployed
+            - Unemployed
+            - Retired
+        creditScore:
+          type: integer
+          minimum: 300
+          maximum: 850
+        propertyValue:
+          type: number
+          format: decimal
+
+    ProductDetailsResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Product ID
+        productCode:
+          type: string
+          description: Product code
+        productName:
+          type: string
+          description: Product name
+        description:
+          type: string
+          description: Product description
+        minLoanAmount:
+          type: number
+          format: decimal
+          description: Minimum loan amount
+        maxLoanAmount:
+          type: number
+          format: decimal
+          description: Maximum loan amount
+        interestRate:
+          type: number
+          format: decimal
+          description: Interest rate percentage
+        processingFee:
+          type: number
+          format: decimal
+          description: Processing fee
+        isActive:
+          type: boolean
+          description: Active status flag
+
+    CommunicationTemplate:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Template ID
+        templateCode:
+          type: string
+          description: Template code
+        templateName:
+          type: string
+          description: Template name
+        channel:
+          type: string
+          enum:
+            - Email
+            - SMS
+            - Push
+            - InApp
+          description: Communication channel
+        subject:
+          type: string
+          description: Email subject (for email channel)
+        body:
+          type: string
+          description: Template body with placeholders
+        isActive:
+          type: boolean
+          description: Active status flag
+        complianceApproved:
+          type: boolean
+          description: Compliance approval flag
+
+    ManualReviewRequest:
+      type: object
+      properties:
+        reviewReason:
+          type: string
+          description: Reason for manual review
+        priority:
+          type: string
+          enum:
+            - Low
+            - Medium
+            - High
+          description: Review priority
+        notes:
+          type: string
+          description: Additional notes for reviewers
+
+    ManualReviewResponse:
+      type: object
+      properties:
+        applicationId:
+          type: string
+          format: uuid
+          description: Application ID
+        reviewId:
+          type: string
+          format: uuid
+          description: Review ID
+        status:
+          type: string
+          description: Review status
+        assignedDate:
+          type: string
+          format: date-time
+          description: Review assignment date
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+        traceId:
+          type: string
+          description: Trace ID for debugging
+        errorCode:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Error message
+        details:
+          type: array
+          items:
+            type: string
+          description: Additional error details
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
