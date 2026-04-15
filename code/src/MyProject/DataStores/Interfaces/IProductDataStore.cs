@@ -1,0 +1,13 @@
+using MyProject.Models.Entities;
+
+namespace MyProject.DataStores.Interfaces;
+
+public interface IProductDataStore
+{
+    Task<Product?> GetByIdAsync(Guid id);
+    Task<Product?> GetByProductCodeAsync(string productCode);
+    Task<IEnumerable<Product>> GetActiveProductsAsync();
+    Task<Product> CreateAsync(Product product);
+    Task<Product> UpdateAsync(Product product);
+    Task<bool> DeleteAsync(Guid id);
+}
